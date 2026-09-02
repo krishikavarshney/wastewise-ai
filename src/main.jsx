@@ -41,6 +41,13 @@ const cropData = {
   }
 };
 
+const initialCrops = [
+  { name: "Wheat", area: "4.5 acres", status: "Moderate Risk", icon: "🌾" },
+  { name: "Rice", area: "3.2 acres", status: "Low Risk", icon: "🌱" },
+  { name: "Tomato", area: "2.1 acres", status: "High Risk", icon: "🍅" },
+  { name: "Cotton", area: "5 acres", status: "Moderate Risk", icon: "🌿" }
+];
+
 const history = [
   ["Wheat", "Leaf Rust", 68, "Moderate", "Today"],
   ["Tomato", "Early Blight", 82, "High", "Yesterday"],
@@ -54,7 +61,21 @@ function App() {
   const [image, setImage] = useState(null);
   const [result, setResult] = useState(null);
 
-  const data = cropData[crop];
+  const [crops, setCrops] = useState(initialCrops);
+  const [showAddCrop, setShowAddCrop] = useState(false);
+
+  const [newCropName, setNewCropName] = useState("");
+  const [newCropArea, setNewCropArea] = useState("");
+
+  const data = cropData[crop] || {
+    disease: "Monitoring Required",
+    confidence: 86,
+    risk: 45,
+    severity: "Moderate",
+    affected: "Unknown",
+    action:
+      "Continue regular monitoring and upload a clear crop image for detailed analysis."
+  };
 
   function scanCrop() {
     setResult(data);
@@ -62,10 +83,44 @@ function App() {
 
   function uploadImage(e) {
     const file = e.target.files[0];
+
     if (file) {
       setImage(URL.createObjectURL(file));
       setResult(null);
     }
+  }
+
+  function addCrop() {
+    const name = newCropName.trim();
+
+    if (!name) {
+      alert("Please enter crop name.");
+      return;
+    }
+
+    const exists = crops.some(
+      (item) => item.name.toLowerCase() === name.toLowerCase()
+    );
+
+    if (exists) {
+      alert("This crop is already added.");
+      return;
+    }
+
+    const icons = ["🌱", "🌾", "🌿", "🥕", "🥔", "🌻"];
+
+    const newCrop = {
+      name,
+      area: newCropArea.trim() || "Area not added",
+      status: "Monitoring",
+      icon: icons[crops.length % icons.length]
+    };
+
+    setCrops([...crops, newCrop]);
+    setCrop(name);
+    setNewCropName("");
+    setNewCropArea("");
+    setShowAddCrop(false);
   }
 
   return (
@@ -83,7 +138,6 @@ function App() {
         </div>
 
         <nav>
-
           <button
             className={page === "dashboard" ? "active" : ""}
             onClick={() => setPage("dashboard")}
@@ -132,15 +186,13 @@ function App() {
           >
             📈 Impact Dashboard
           </button>
-
         </nav>
 
         <div className="system-status">
-          <span></span>
-          AI System Online
+          <span></span> AI System Online
         </div>
-
       </aside>
+
 
       {/* MAIN */}
       <main className="main">
@@ -163,6 +215,7 @@ function App() {
 
           <div className="profile">
             <div className="avatar">👨‍🌾</div>
+
             <div>
               <strong>Farmer</strong>
               <small>Field Manager</small>
@@ -180,15 +233,17 @@ function App() {
             <div className="hero">
 
               <div>
-                <span className="tag">AI-POWERED CROP PROTECTION</span>
+                <span className="tag">
+                  AI-POWERED CROP PROTECTION
+                </span>
 
                 <h2>
                   Detect crop problems before they spread.
                 </h2>
 
                 <p>
-                  CropGuard helps farmers identify possible diseases and
-                  pest risks early and take timely action.
+                  CropGuard helps farmers identify possible diseases
+                  and pest risks early and take timely action.
                 </p>
 
                 <button
@@ -204,6 +259,69 @@ function App() {
             </div>
 
 
+            {/* MY CROPS SECTION */}
+
+            <div className="section-title crop-section-title">
+
+              <div>
+                <h2>My Crops</h2>
+                <p>Your currently monitored crops</p>
+              </div>
+
+              <button
+                className="add-crop-btn"
+                onClick={() => setShowAddCrop(true)}
+              >
+                + Add Crop
+              </button>
+
+            </div>
+
+
+            <div className="crop-list">
+
+              {crops.map((item, index) => {
+
+                const riskData = cropData[item.name];
+
+                return (
+                  <div className="crop-card" key={index}>
+
+                    <div className="crop-card-icon">
+                      {item.icon}
+                    </div>
+
+                    <div className="crop-card-info">
+                      <h3>{item.name}</h3>
+                      <p>{item.area}</p>
+                    </div>
+
+                    <div className="crop-card-right">
+
+                      <Badge
+                        type={
+                          riskData?.severity === "High"
+                            ? "high"
+                            : riskData?.severity === "Low"
+                            ? "low"
+                            : "moderate"
+                        }
+                      >
+                        {riskData
+                          ? `${riskData.risk}% Risk`
+                          : "Monitoring"}
+                      </Badge>
+
+                    </div>
+
+                  </div>
+                );
+
+              })}
+
+            </div>
+
+
             <div className="section-title">
               <h2>Farm Overview</h2>
               <p>Current crop health status</p>
@@ -212,13 +330,29 @@ function App() {
 
             <div className="stats">
 
-              <Stat icon="🌱" title="Crops Monitored" value="24" />
+              <Stat
+                icon="🌱"
+                title="Crops Monitored"
+                value={crops.length}
+              />
 
-              <Stat icon="🟢" title="Healthy Crops" value="15" />
+              <Stat
+                icon="🟢"
+                title="Healthy Crops"
+                value="15"
+              />
 
-              <Stat icon="🟡" title="Monitoring" value="6" />
+              <Stat
+                icon="🟡"
+                title="Monitoring"
+                value="6"
+              />
 
-              <Stat icon="🔴" title="High Risk" value="3" />
+              <Stat
+                icon="🔴"
+                title="High Risk"
+                value="3"
+              />
 
             </div>
 
@@ -228,19 +362,37 @@ function App() {
               <div className="card">
 
                 <div className="card-head">
+
                   <div>
                     <h3>🌦️ Weather-Based Risk</h3>
                     <p>Current conditions</p>
                   </div>
 
-                  <Badge type="moderate">MODERATE</Badge>
+                  <Badge type="moderate">
+                    MODERATE
+                  </Badge>
+
                 </div>
 
                 <div className="weather">
 
-                  <Weather icon="🌡️" value="29°C" name="Temperature" />
-                  <Weather icon="💧" value="78%" name="Humidity" />
-                  <Weather icon="🌧️" value="12 mm" name="Rainfall" />
+                  <Weather
+                    icon="🌡️"
+                    value="29°C"
+                    name="Temperature"
+                  />
+
+                  <Weather
+                    icon="💧"
+                    value="78%"
+                    name="Humidity"
+                  />
+
+                  <Weather
+                    icon="🌧️"
+                    value="12 mm"
+                    name="Rainfall"
+                  />
 
                 </div>
 
@@ -254,12 +406,16 @@ function App() {
               <div className="card">
 
                 <div className="card-head">
+
                   <div>
                     <h3>🚨 Latest Detection</h3>
                     <p>Most recent scan</p>
                   </div>
 
-                  <Badge type="high">HIGH RISK</Badge>
+                  <Badge type="high">
+                    HIGH RISK
+                  </Badge>
+
                 </div>
 
                 <div className="latest">
@@ -319,10 +475,13 @@ function App() {
                     setResult(null);
                   }}
                 >
-                  <option>Wheat</option>
-                  <option>Rice</option>
-                  <option>Tomato</option>
-                  <option>Cotton</option>
+
+                  {crops.map((item, index) => (
+                    <option key={index} value={item.name}>
+                      {item.name}
+                    </option>
+                  ))}
+
                 </select>
 
 
@@ -333,12 +492,19 @@ function App() {
                 <label className="upload">
 
                   {image ? (
-                    <img src={image} alt="Crop preview" />
+                    <img
+                      src={image}
+                      alt="Crop preview"
+                    />
                   ) : (
                     <>
                       <div>📷</div>
-                      <strong>Upload leaf / crop image</strong>
-                      <span>JPG, JPEG or PNG</span>
+                      <strong>
+                        Upload leaf / crop image
+                      </strong>
+                      <span>
+                        JPG, JPEG or PNG
+                      </span>
                     </>
                   )}
 
@@ -382,17 +548,18 @@ function App() {
                 ) : (
 
                   <>
-
                     <div className="result-top">
 
                       <div>⚠️</div>
 
                       <div>
+
                         <span>Possible Detection</span>
 
                         <h2>{result.disease}</h2>
 
                         <p>{crop} crop</p>
+
                       </div>
 
                     </div>
@@ -400,10 +567,25 @@ function App() {
 
                     <div className="result-grid">
 
-                      <Result label="AI Confidence" value={`${result.confidence}%`} />
-                      <Result label="Severity" value={result.severity} />
-                      <Result label="Risk Score" value={`${result.risk}%`} />
-                      <Result label="Affected Area" value={result.affected} />
+                      <Result
+                        label="AI Confidence"
+                        value={`${result.confidence}%`}
+                      />
+
+                      <Result
+                        label="Severity"
+                        value={result.severity}
+                      />
+
+                      <Result
+                        label="Risk Score"
+                        value={`${result.risk}%`}
+                      />
+
+                      <Result
+                        label="Affected Area"
+                        value={result.affected}
+                      />
 
                     </div>
 
@@ -412,7 +594,9 @@ function App() {
 
                       <h3>📋 Recommended Action</h3>
 
-                      <p>{result.action}</p>
+                      <p>
+                        {result.action}
+                      </p>
 
                     </div>
 
@@ -426,9 +610,9 @@ function App() {
 
 
             <div className="demo">
-              💡 <strong>Prototype Demo:</strong> Detection results are
-              simulated. A production version can connect a trained
-              crop-disease ML model.
+              💡 <strong>Prototype Demo:</strong>{" "}
+              Detection results are simulated. A production version
+              can connect a trained crop-disease ML model.
             </div>
 
           </section>
@@ -442,7 +626,9 @@ function App() {
 
             <div className="intro">
 
-              <span className="tag">RISK INTELLIGENCE</span>
+              <span className="tag">
+                RISK INTELLIGENCE
+              </span>
 
               <h2>Disease & Risk Analysis</h2>
 
@@ -456,9 +642,13 @@ function App() {
             <div className="risk-hero">
 
               <div>
+
                 <span>OVERALL CROP RISK</span>
+
                 <h2>68%</h2>
+
                 <p>Moderate Risk</p>
+
               </div>
 
               <div className="risk-circle">
@@ -470,10 +660,29 @@ function App() {
 
             <div className="weather four">
 
-              <Weather icon="🌡️" value="29°C" name="Temperature" />
-              <Weather icon="💧" value="78%" name="Humidity" />
-              <Weather icon="🌧️" value="12 mm" name="Rainfall" />
-              <Weather icon="🌾" value="68%" name="Disease Risk" />
+              <Weather
+                icon="🌡️"
+                value="29°C"
+                name="Temperature"
+              />
+
+              <Weather
+                icon="💧"
+                value="78%"
+                name="Humidity"
+              />
+
+              <Weather
+                icon="🌧️"
+                value="12 mm"
+                name="Rainfall"
+              />
+
+              <Weather
+                icon="🌾"
+                value="68%"
+                name="Disease Risk"
+              />
 
             </div>
 
@@ -513,7 +722,9 @@ function App() {
 
             <div className="intro">
 
-              <span className="tag">PREDICTIVE MONITORING</span>
+              <span className="tag">
+                PREDICTIVE MONITORING
+              </span>
 
               <h2>7-Day Disease Risk Forecast</h2>
 
@@ -529,6 +740,7 @@ function App() {
               <div>⚠️</div>
 
               <div>
+
                 <strong>
                   Risk may increase in the next 48 hours
                 </strong>
@@ -537,6 +749,7 @@ function App() {
                   Higher humidity and rainfall may create favorable
                   conditions for fungal diseases.
                 </p>
+
               </div>
 
             </div>
@@ -565,8 +778,11 @@ function App() {
                   <span>{d[2]}</span>
 
                   <div className="forecast-risk">
+
                     <small>Risk</small>
+
                     <b>{d[3]}</b>
+
                   </div>
 
                   <Badge
@@ -594,17 +810,19 @@ function App() {
 
               <p>
                 Increase crop inspection during the next 2–3 days,
-                especially after rainfall. Early identification can help
-                farmers take timely management decisions.
+                especially after rainfall. Early identification can
+                help farmers take timely management decisions.
               </p>
 
             </div>
 
 
             <div className="demo">
-              💡 <strong>Prototype Forecast:</strong> Forecast values are
-              simulated demo data. A production system can use live weather
-              data and trained disease-risk models.
+
+              💡 <strong>Prototype Forecast:</strong>{" "}
+              Forecast values are simulated demo data. A production
+              system can use live weather data and trained disease-risk models.
+
             </div>
 
           </section>
@@ -618,7 +836,9 @@ function App() {
 
             <div className="intro">
 
-              <span className="tag">ACTION CENTER</span>
+              <span className="tag">
+                ACTION CENTER
+              </span>
 
               <h2>Smart Alerts</h2>
 
@@ -680,7 +900,9 @@ function App() {
 
             <div className="intro">
 
-              <span className="tag">HISTORICAL MONITORING</span>
+              <span className="tag">
+                HISTORICAL MONITORING
+              </span>
 
               <h2>Crop Health History</h2>
 
@@ -730,11 +952,14 @@ function App() {
                 <div className="history-row" key={i}>
 
                   <div className="history-name">
+
                     🌱
+
                     <div>
                       <strong>{item[0]}</strong>
                       <small>{item[1]}</small>
                     </div>
+
                   </div>
 
                   <Badge
@@ -770,13 +995,15 @@ function App() {
 
             <div className="intro">
 
-              <span className="tag">SYSTEM IMPACT</span>
+              <span className="tag">
+                SYSTEM IMPACT
+              </span>
 
               <h2>Impact Dashboard</h2>
 
               <p>
-                Measure how early detection and monitoring can improve crop
-                health management.
+                Measure how early detection and monitoring can improve
+                crop health management.
               </p>
 
             </div>
@@ -786,7 +1013,7 @@ function App() {
 
               <Impact
                 icon="🌱"
-                value="24"
+                value={crops.length}
                 title="Crops Monitored"
                 text="Fields actively monitored"
               />
@@ -837,9 +1064,20 @@ function App() {
 
                 <div className="health-bars">
 
-                  <Progress label="Healthy Crops" value="63%" />
-                  <Progress label="Under Monitoring" value="25%" />
-                  <Progress label="High Risk" value="12%" />
+                  <Progress
+                    label="Healthy Crops"
+                    value="63%"
+                  />
+
+                  <Progress
+                    label="Under Monitoring"
+                    value="25%"
+                  />
+
+                  <Progress
+                    label="High Risk"
+                    value="12%"
+                  />
 
                 </div>
 
@@ -852,12 +1090,14 @@ function App() {
                   🌾
                 </div>
 
-                <h3>Why Early Detection Matters</h3>
+                <h3>
+                  Why Early Detection Matters
+                </h3>
 
                 <p>
-                  Identifying crop health problems early helps farmers take
-                  timely management decisions, reduce potential crop losses
-                  and improve overall farm monitoring.
+                  Identifying crop health problems early helps farmers
+                  take timely management decisions, reduce potential
+                  crop losses and improve overall farm monitoring.
                 </p>
 
               </div>
@@ -866,15 +1106,109 @@ function App() {
 
 
             <div className="demo">
-              💡 <strong>Prototype Metrics:</strong> Impact values are demo
-              estimates. Real impact can be calculated from actual field,
-              scan and crop-health data.
+
+              💡 <strong>Prototype Metrics:</strong>{" "}
+              Impact values are demo estimates. Real impact can be
+              calculated from actual field, scan and crop-health data.
+
             </div>
 
           </section>
         )}
 
       </main>
+
+
+      {/* ================= ADD CROP MODAL ================= */}
+
+      {showAddCrop && (
+
+        <div
+          className="modal-overlay"
+          onClick={() => setShowAddCrop(false)}
+        >
+
+          <div
+            className="add-crop-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+
+            <div className="modal-head">
+
+              <div>
+                <span className="tag">
+                  FARM MANAGEMENT
+                </span>
+
+                <h2>Add New Crop</h2>
+
+                <p>
+                  Add a crop to your farm monitoring list.
+                </p>
+              </div>
+
+              <button
+                className="close-btn"
+                onClick={() => setShowAddCrop(false)}
+              >
+                ×
+              </button>
+
+            </div>
+
+
+            <label>
+              Crop Name
+            </label>
+
+            <input
+              type="text"
+              placeholder="e.g. Maize"
+              value={newCropName}
+              onChange={(e) =>
+                setNewCropName(e.target.value)
+              }
+            />
+
+
+            <label>
+              Field Area
+            </label>
+
+            <input
+              type="text"
+              placeholder="e.g. 3 acres"
+              value={newCropArea}
+              onChange={(e) =>
+                setNewCropArea(e.target.value)
+              }
+            />
+
+
+            <div className="modal-actions">
+
+              <button
+                className="cancel-btn"
+                onClick={() => setShowAddCrop(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="primary"
+                onClick={addCrop}
+              >
+                + Add Crop
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
     </div>
   );
 }
@@ -885,25 +1219,35 @@ function App() {
 function Stat({ icon, title, value }) {
   return (
     <div className="stat">
-      <div className="stat-icon">{icon}</div>
+
+      <div className="stat-icon">
+        {icon}
+      </div>
 
       <div>
         <p>{title}</p>
         <h2>{value}</h2>
       </div>
+
     </div>
   );
 }
 
+
 function Weather({ icon, value, name }) {
   return (
     <div className="weather-item">
+
       <span>{icon}</span>
+
       <strong>{value}</strong>
+
       <small>{name}</small>
+
     </div>
   );
 }
+
 
 function Badge({ type, children }) {
   return (
@@ -913,29 +1257,47 @@ function Badge({ type, children }) {
   );
 }
 
+
 function Result({ label, value }) {
   return (
     <div className="result">
+
       <small>{label}</small>
+
       <strong>{value}</strong>
+
     </div>
   );
 }
+
 
 function Reason({ icon, title, text }) {
   return (
     <div className="reason">
+
       <span>{icon}</span>
 
       <div>
+
         <strong>{title}</strong>
+
         <p>{text}</p>
+
       </div>
+
     </div>
   );
 }
 
-function Alert({ icon, title, badge, type, text, action }) {
+
+function Alert({
+  icon,
+  title,
+  badge,
+  type,
+  text,
+  action
+}) {
   return (
     <div className={`alert ${type}`}>
 
@@ -946,14 +1308,20 @@ function Alert({ icon, title, badge, type, text, action }) {
       <div className="alert-body">
 
         <div className="alert-head">
+
           <h3>{title}</h3>
-          <Badge type={type}>{badge}</Badge>
+
+          <Badge type={type}>
+            {badge}
+          </Badge>
+
         </div>
 
         <p>{text}</p>
 
         <span>
-          <strong>Recommended:</strong> {action}
+          <strong>Recommended:</strong>{" "}
+          {action}
         </span>
 
       </div>
@@ -962,7 +1330,13 @@ function Alert({ icon, title, badge, type, text, action }) {
   );
 }
 
-function Impact({ icon, value, title, text }) {
+
+function Impact({
+  icon,
+  value,
+  title,
+  text
+}) {
   return (
     <div className="impact">
 
@@ -971,31 +1345,42 @@ function Impact({ icon, value, title, text }) {
       </div>
 
       <div>
+
         <span>{title}</span>
+
         <h2>{value}</h2>
+
         <p>{text}</p>
+
       </div>
 
     </div>
   );
 }
+
 
 function Progress({ label, value }) {
   return (
     <div className="progress-row">
 
       <div>
+
         <span>{label}</span>
+
         <strong>{value}</strong>
+
       </div>
 
       <div className="progress">
+
         <div style={{ width: value }}></div>
+
       </div>
 
     </div>
   );
 }
+
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
